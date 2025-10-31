@@ -87,8 +87,17 @@ public class Main {
                 else if (choice.equals("8")) loadCLI();
                 else if (choice.equals("9")) searchCLI();
                 else if (choice.equals("10")) listMaint();
-                else if (choice.equals("11")){ 
-                    System.out.println("Bye"); 
+                else if (choice.equals("11")) sortingMenu();
+                else if (choice.equals("12")) displayFastestSlowest();
+                else if (choice.equals("13")) displayMostLeastEfficient();
+                else if (choice.equals("14")) manager.displayUniqueModels();
+                else if (choice.equals("15")) manager.displaySortedByEfficiency();
+                else if (choice.equals("16")) displayAllVehicles();
+                else if (choice.equals("17")){ 
+                    System.out.println(
+                        "Exiting... " 
+                        + "Goodbye!"
+                    ); 
                     break; 
                 }
                 else {
@@ -100,6 +109,8 @@ public class Main {
                     "Error: " 
                     + e.getMessage()
                 );
+            } finally {
+                sc.close();
             }
         }
     }
@@ -116,8 +127,180 @@ public class Main {
         System.out.println("8. Load Fleet");
         System.out.println("9. Search by Type");
         System.out.println("10. List Vehicles Needing Maintenance");
-        System.out.println("11. Exit");
-        System.out.print("Choice:");
+        System.out.println("11. Sort Fleet (Submenu)");
+        System.out.println("12. Show Fastest/Slowest Vehicle");
+        System.out.println("13. Show Most/Least Efficient Vehicle");
+        System.out.println("14. Display Unique Models (HashSet)");
+        System.out.println("15. Display Sorted by Efficiency (TreeSet)");
+        System.out.println("16. Display All Vehicles");
+        System.out.println("17. Exit");
+        System.out.print(
+            "Enter" 
+            + "your Choice:"
+        );
+    }
+
+    private static void sortingMenu() {
+        System.out.println(
+            "\n=== SORTING" 
+            + " OPTIONS ==="
+        );
+        System.out.println(
+            "1. Sort by " 
+            +"Fuel Efficiency"
+        );
+        System.out.println(
+            "2. Sort by "
+            +"Maximum Speed"
+        );
+        System.out.println(
+            "3. Sort by "
+            +"Model Name"
+        );
+        System.out.println(
+            "4. Sort by "
+            +"Vehicle ID"
+        );
+        System.out.print(
+            "Enter choice: "
+        );
+        
+        String choice = sc.nextLine()
+                        .trim();
+        
+        switch (choice) {
+            case "1":
+                manager.sortFleetByEfficiency();
+                displayAllVehicles();
+                break;
+            case "2":
+                manager.sortFleetBySpeed();
+                displayAllVehicles();
+                break;
+            case "3":
+                manager.sortFleetByModel();
+                displayAllVehicles();
+                break;
+            case "4":
+                manager.sortFleetById();
+                displayAllVehicles();
+                break;
+            default:
+                System.out.println(
+                    "Invalid "
+                    +"sorting option."
+                );
+        }
+    }
+
+    private static void displayFastestSlowest() {
+        System.out.println(
+            "\n=== Fastest"
+            +" and Slowest Vehicles ==="
+        );
+        
+        Vehicle fastest = manager.getFastestVehicle();
+        Vehicle slowest = manager.getSlowestVehicle();
+        
+        if(fastest!=null){
+            System.out.println("\nFastest Vehicle:");
+            fastest.displayInfo();
+            System.out.printf(
+                "Max Speed: %.2f km/h%n", 
+                fastest.getMaxSpeed()
+            );
+        } else {
+            System.out.println(
+                "No vehicles in fleet."
+            );
+        }
+        
+        if (slowest != null) {
+            System.out.println(
+                "\nSlowest Vehicle:"
+            );
+            slowest.displayInfo();
+            System.out.printf(
+                "Max Speed: %.2f km/h%n", 
+                slowest.getMaxSpeed()
+            );
+        }
+    }
+
+    private static void displayMostLeastEfficient() {
+        System.out.println(
+            "\n=== Most and"
+            +" Least Efficient Vehicles ==="
+        );
+        
+        Vehicle mostEff = manager.getMostEfficientVehicle();
+        Vehicle leastEff = manager.getLeastEfficientVehicle();
+        
+        if(mostEff != null){
+            System.out.println(
+                "\nMost Efficient Vehicle:"
+            );
+            mostEff.displayInfo();
+            System.out.printf(
+                "Fuel Efficiency: %.2f km/L%n", 
+                mostEff.calculateFuelEfficiency()
+            );
+        } else {
+            System.out.println(
+                "No vehicles in fleet."
+            );
+        }
+        
+        if (
+            leastEff != null && 
+            leastEff.calculateFuelEfficiency() > 0
+        ) {
+            System.out.println(
+                "\nLeast Efficient Vehicle:"
+            );
+            leastEff.displayInfo();
+            System.out.printf(
+                "Fuel Efficiency: %.2f km/L%n", 
+                leastEff.calculateFuelEfficiency()
+            );
+        }
+    }
+
+    private static void displayAllVehicles() {
+        System.out.println(
+            "\n=== All Vehicles"
+            +" in Fleet ==="
+        );
+        List<Vehicle> vehicles = manager.getFleets();
+        
+        if (vehicles.isEmpty()) {
+            System.out.println(
+                "No vehicles in fleet."
+            );
+            return;
+        }
+        
+        System.out.println(
+            "Total vehicles: " 
+            + vehicles.size()
+        );
+        System.out.println(
+            "----------------------------------------"
+        );
+        
+        int count = 1;
+        for (Vehicle v : vehicles) {
+            System.out.print(
+                count++ 
+                + ". "
+            );
+            v.displayInfo();
+            System.out.printf(
+                "   Type: %s | Efficiency:"
+                +" %.2f km/L%n",
+                v.getClass().getSimpleName(),
+                v.calculateFuelEfficiency());
+        }
     }
 
     private static void addVehicleCLI() 
@@ -276,9 +459,24 @@ public class Main {
                 "vehicles." + t
             );
             var list = manager.searchByType(cls);
-            for(var v:list){
-                v.displayInfo();
-            } 
+            if (list.isEmpty()) {
+                System.out.println(
+                    "No vehicles of type " 
+                    + t 
+                    + " found."
+                );
+            } else {
+                System.out.println(
+                    "\n=== Found " 
+                    + list.size() 
+                    + " " 
+                    + t 
+                    + "(s) ==="
+                );
+                for (var v : list) {
+                    v.displayInfo();
+                }
+            }
         }
         catch(ClassNotFoundException e){
             System.out.println(
@@ -289,9 +487,23 @@ public class Main {
 
     private static void listMaint(){
         var list = manager.getVehiclesNeedingMaintenance();
-        if (list.isEmpty()) System.out.println("No vehicles need maintenance.");
-        else for(var v:list){
-            v.displayInfo();
+        if (list.isEmpty()) {
+            System.out.println(
+                "No vehicles need maintenance."
+            );
+        }
+        else {
+            System.out.println(
+                "\n=== Vehicles Needing"
+                +" Maintenance ==="
+            );
+            System.out.println(
+                "Total: " 
+                + list.size()
+            );
+            for (var v : list) {
+                v.displayInfo();
+            }
         } 
     }
 }
